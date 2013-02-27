@@ -22,13 +22,6 @@ function testDictionary(typo) {
         equal(typo.dictionary, "en_US");
     });
 
-    test("Suggestions", function () {
-        deepEqual(typo.suggest("speling"), [
-            "spelling", "spieling", "spewing", "peeling", "selling" ]);
-        deepEqual(typo.suggest("spitting"), [],
-                "Correctly spelled words receive no suggestions.");
-    });
-
     test("Correct checking of words with no affixes", function () {
         equal(typo.check("a"), true);
         equal(typo.check("aback"), true);
@@ -121,13 +114,6 @@ function testDictionary(typo) {
         equal(typo.check("concept's"), true);
         // acceptability's is in the dictionary including the 's
         equal(typo.check("acceptability's's"), false);
-    });
-
-    test("Replacement rules are implemented", function () {
-        deepEqual(typo.suggest("wagh"), [ "weigh" ]);
-        deepEqual(typo.suggest("ceit"), [ "cat" ]);
-        deepEqual(typo.suggest("seau"), [ "so" ]);
-        deepEqual(typo.suggest("soker"), [ "choker" ]);
     });
 
     test("Contractions", function () {
