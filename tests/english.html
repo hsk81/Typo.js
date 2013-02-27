@@ -12,14 +12,14 @@
 
 <script type="text/javascript">
 function run() {
-    var affData = Typo.prototype._readFile("../typo/dictionaries/en_US.aff");
-    var wordData = Typo.prototype._readFile("../typo/dictionaries/en_US.dic");
+    var affData = Typo.prototype.read_file("../typo/dictionaries/en_US.aff");
+    var wordData = Typo.prototype.read_file("../typo/dictionaries/en_US.dic");
     testDictionary(new Typo("en_US", affData, wordData));
 }
 
 function testDictionary(typo) {
     test("Dictionary object attributes are properly set", function () {
-        equal(typo.dictionary, "en_US");
+        equal(typo.lingua, "en_US");
     });
 
     test("Correct checking of words with no affixes", function () {

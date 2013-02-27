@@ -16,29 +16,29 @@ function run() {
 
     test("Dictionary instantiated without arguments is empty.", function () {
         deepEqual(typo.rules, {});
-        deepEqual(typo.dictionaryTable, {});
-        deepEqual(typo.dictionary, null);
+        deepEqual(typo.lookup_tbl, {});
+        deepEqual(typo.lingua, null);
     });
 
     test("Comments are removed from affix files", function () {
-        equal(typo._removeAffixComments(
+        equal(typo.aff_clean(
                 "# abc\ndef # ghi\n # jkl\nmnop qrst\n##"),
                 "def\nmnop qrst", "Comment lines are removed.");
-        equal(typo._removeAffixComments(""),
+        equal(typo.aff_clean(""),
                 "", "Handles empty input.");
-        equal(typo._removeAffixComments("abc"),
+        equal(typo.aff_clean("abc"),
                 "abc", "Handles input that doesn't need changing.");
-        equal(typo._removeAffixComments(" abc"),
+        equal(typo.aff_clean(" abc"),
                 "abc", "Leading whitespace is removed.");
-        equal(typo._removeAffixComments(" abc "),
+        equal(typo.aff_clean(" abc "),
                 "abc", "Leading and trailing whitespace is removed.");
-        equal(typo._removeAffixComments("\n\n\abc\n"),
+        equal(typo.aff_clean("\n\n\abc\n"),
                 "abc", "Leading and trailing newlines are removed.");
-        equal(typo._removeAffixComments("\n\n"),
+        equal(typo.aff_clean("\n\n"),
                 "", "Consecutive newlines are removed.");
-        equal(typo._removeAffixComments("\t"),
+        equal(typo.aff_clean("\t"),
                 "", "Tabs are treated as whitespace.");
-        equal(typo._removeAffixComments("\n\t \t\n\n"),
+        equal(typo.aff_clean("\n\t \t\n\n"),
                 "", "All whitespace is treated the same.");
     });
 }</script>

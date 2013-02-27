@@ -3,78 +3,78 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-var Typo = function (dictionary, affData, wordsData, settings) {
+var Typo = function (lingua, aff_data, dic_data, settings) {
     settings = settings || {};
 
-    this.dictionary = null;
+    this.lingua = lingua;
     this.rules = {};
-    this.dictionaryTable = {};
-    this.compoundRules = [];
-    this.compoundRuleCodes = {};
-    this.replacementTable = [];
+    this.lookup_tbl = {};
+    this.CRs = [];
+    this.CRCs = {};
+    this.ersatz_tbl = [];
     this.flags = settings.flags || {};
 
-    if (dictionary) {
-        this.dictionary = dictionary;
+    if (!this.lingua) {
+        return this;
+    }
 
-        var path = settings.dictionaryPath || '';
-        if (!affData) affData = this._readFile(
-            path + "/" + dictionary + "/" + dictionary + ".aff");
-        if (!wordsData) wordsData = this._readFile(
-            path + "/" + dictionary + "/" + dictionary + ".dic");
+    var path = settings.path || '';
+    if (!aff_data) aff_data = this.read_file(
+        path + "/" + lingua + "/" + lingua + ".aff");
+    if (!dic_data) dic_data = this.read_file(
+        path + "/" + lingua + "/" + lingua + ".dic");
 
-        this.rules = this._parseAFF(affData);
-        this.compoundRuleCodes = {};
+    this.rules = this.aff_parse(aff_data);
+    this.CRCs = {};
 
-        for (var i = 0, _len = this.compoundRules.length; i < _len; i++) {
-            var rule = this.compoundRules[i];
-            for (var j = 0, _jlen = rule.length; j < _jlen; j++) {
-                this.compoundRuleCodes[rule[j]] = [];
-            }
+    for (var i = 0, _len = this.CRs.length; i < _len; i++) {
+        var rule = this.CRs[i];
+        for (var j = 0, _jlen = rule.length; j < _jlen; j++) {
+            this.CRCs[rule[j]] = [];
+        }
+    }
+
+    // If we add this ONLYINCOMPOUND flag to this.CRCs, then `dic_parse`
+    // will do the work of saving the list of words that are compound-only.
+    if ("ONLYINCOMPOUND" in this.flags) {
+        this.CRCs[this.flags.ONLYINCOMPOUND] = [];
+    }
+
+    this.lookup_tbl = this.dic_parse(dic_data);
+
+    // Get rid of any codes from the CRCs that are never used (or that were
+    // special regex characters). Not especially necessary ..
+    for (var i in this.CRCs) {
+        if (this.CRCs[i].length == 0) delete this.CRCs[i];
+    }
+
+    // Build the full regular expressions for each compound rule. I've a
+    // feeling (but no confirmation yet) that this method of testing for
+    // compound words is probably *slow*!
+    for (var i = 0, _len = this.CRs.length; i < _len; i++) {
+        var rule_text = this.CRs[i];
+        var expr_text = "";
+
+        for (var j = 0, _jlen = rule_text.length; j < _jlen; j++) {
+            var ch = rule_text[j];
+            if (ch in this.CRCs)
+                expr_text += "(" + this.CRCs[ch].join("|") + ")";
+            else
+                expr_text += ch;
         }
 
-        // If we add this ONLYINCOMPOUND flag to this.compoundRuleCodes, then _parseDIC
-        // will do the work of saving the list of words that are compound-only.
-        if ("ONLYINCOMPOUND" in this.flags) {
-            this.compoundRuleCodes[this.flags.ONLYINCOMPOUND] = [];
-        }
-
-        this.dictionaryTable = this._parseDIC(wordsData);
-
-        // Get rid of any codes from the compound rule codes that are never used
-        // (or that were special regex characters).  Not especially necessary...
-        for (var i in this.compoundRuleCodes) {
-            if (this.compoundRuleCodes[i].length == 0) {
-                delete this.compoundRuleCodes[i];
-            }
-        }
-
-        // Build the full regular expressions for each compound rule.
-        // I have a feeling (but no confirmation yet) that this method of
-        // testing for compound words is probably slow.
-        for (var i = 0, _len = this.compoundRules.length; i < _len; i++) {
-            var ruleText = this.compoundRules[i];
-            var expressionText = "";
-
-            for (var j = 0, _jlen = ruleText.length; j < _jlen; j++) {
-                var character = ruleText[j];
-
-                if (character in this.compoundRuleCodes)
-                    expressionText += "(" + this.compoundRuleCodes[character].join("|") + ")";
-                else
-                    expressionText += character;
-            }
-
-            this.compoundRules[i] = new RegExp(expressionText, "i");
-        }
+        this.CRs[i] = new RegExp(expr_text, "i");
     }
 
     return this;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
 Typo.prototype = {
 
-    _readFile: function (path, charset) {
+    read_file: function (path, charset) {
         if (!charset) charset = "ISO8859-1";
 
         var req = new XMLHttpRequest();
@@ -85,11 +85,14 @@ Typo.prototype = {
         return req.responseText;
     },
 
-    _parseAFF: function (data) {
+    ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    aff_parse: function (data) {
         var rules = {};
 
         // Remove comment lines
-        data = this._removeAffixComments(data);
+        data = this.aff_clean(data);
 
         var lines = data.split("\n");
 
@@ -118,7 +121,7 @@ Typo.prototype = {
                     var charactersToAdd = additionParts[0];
                     if (charactersToAdd === "0") charactersToAdd = "";
 
-                    var continuationClasses = this.parseRuleCodes(additionParts[1]);
+                    var continuationClasses = this.parse_rcs(additionParts[1]);
 
                     var regexToMatch = lineParts[4];
 
@@ -159,7 +162,7 @@ Typo.prototype = {
                     var line = lines[j];
 
                     var lineParts = line.split(/\s+/);
-                    this.compoundRules.push(lineParts[1]);
+                    this.CRs.push(lineParts[1]);
                 }
 
                 i += numEntries;
@@ -168,7 +171,7 @@ Typo.prototype = {
                 var lineParts = line.split(/\s+/);
 
                 if (lineParts.length === 3) {
-                    this.replacementTable.push([ lineParts[1], lineParts[2] ]);
+                    this.ersatz_tbl.push([ lineParts[1], lineParts[2] ]);
                 }
             }
             else {
@@ -185,7 +188,7 @@ Typo.prototype = {
         return rules;
     },
 
-    _removeAffixComments: function (data) {
+    aff_clean: function (data) {
 
         // Remove comments
         data = data.replace(/#.*$/mg, "");
@@ -199,8 +202,11 @@ Typo.prototype = {
         return data;
     },
 
-    _parseDIC: function (data) {
-        data = this._removeDicComments(data);
+    ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    dic_parse: function (data) {
+        data = this.dic_clean(data);
 
         var lines = data.split("\n");
         var dictionaryTable = {};
@@ -215,7 +221,7 @@ Typo.prototype = {
 
             // Now for each affix rule, generate that form of the word.
             if (parts.length > 1) {
-                var ruleCodesArray = this.parseRuleCodes(parts[1]);
+                var ruleCodesArray = this.parse_rcs(parts[1]);
 
                 // Save the ruleCodes for compound word situations.
                 if (!("NEEDAFFIX" in this.flags) || ruleCodesArray.indexOf(this.flags.NEEDAFFIX) == -1) {
@@ -228,7 +234,7 @@ Typo.prototype = {
                     var rule = this.rules[code];
 
                     if (rule) {
-                        var newWords = this._applyRule(word, rule);
+                        var newWords = this.apply_rule(word, rule);
 
                         for (var ii = 0, _iilen = newWords.length; ii < _iilen; ii++) {
                             var newWord = newWords[ii];
@@ -243,7 +249,7 @@ Typo.prototype = {
 
                                     if (combineRule) {
                                         if (combineRule.combineable && (rule.type != combineRule.type)) {
-                                            var otherNewWords = this._applyRule(newWord, combineRule);
+                                            var otherNewWords = this.apply_rule(newWord, combineRule);
 
                                             for (var iii = 0, _iiilen = otherNewWords.length; iii < _iiilen; iii++) {
                                                 var otherNewWord = otherNewWords[iii];
@@ -256,8 +262,8 @@ Typo.prototype = {
                         }
                     }
 
-                    if (code in this.compoundRuleCodes) {
-                        this.compoundRuleCodes[code].push(word);
+                    if (code in this.CRCs) {
+                        this.CRCs[code].push(word);
                     }
                 }
             }
@@ -269,7 +275,7 @@ Typo.prototype = {
         return dictionaryTable;
     },
 
-    _removeDicComments: function (data) {
+    dic_clean: function (data) {
 
         // Remove comments
         data = data.replace(/^\t.*$/mg, "");
@@ -283,28 +289,7 @@ Typo.prototype = {
         return data;
     },
 
-    parseRuleCodes: function (textCodes) {
-        if (!textCodes) {
-            return [];
-        }
-        else if (!("FLAG" in this.flags)) {
-            return textCodes.split("");
-        }
-        else if (this.flags.FLAG === "long") {
-            var flags = [];
-
-            for (var i = 0, _len = textCodes.length; i < _len; i += 2) {
-                flags.push(textCodes.substr(i, 2));
-            }
-
-            return flags;
-        }
-        else if (this.flags.FLAG === "num") {
-            return textCode.split(",");
-        }
-    },
-
-    _applyRule: function (word, rule) {
+    apply_rule: function (word, rule) {
         var entries = rule.entries;
         var newWords = [];
 
@@ -331,7 +316,7 @@ Typo.prototype = {
                     for (var j = 0, _jlen = entry.continuationClasses.length; j < _jlen; j++) {
                         var continuationRule = this.rules[entry.continuationClasses[j]];
                         if (continuationRule) {
-                            newWords = newWords.concat(this._applyRule(newWord, continuationRule));
+                            newWords = newWords.concat(this.apply_rule(newWord, continuationRule));
                         }
                     }
                 }
@@ -341,80 +326,84 @@ Typo.prototype = {
         return newWords;
     },
 
-    check: function (aWord) {
-        // Remove leading and trailing whitespace
-        var trimmedWord = aWord.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+    ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
-        if (this.checkExact(trimmedWord)) {
-            return true;
+    parse_rcs: function (text_codes) {
+        if (!text_codes) {
+            return [];
+        }
+        else if (!("FLAG" in this.flags)) {
+            return text_codes.split("");
+        }
+        else if (this.flags.FLAG === "long") {
+            var flags = [];
+            for (var i = 0, _len = text_codes.length; i < _len; i += 2) {
+                flags.push(text_codes.substr(i, 2));
+            }
+
+            return flags;
+        }
+        else if (this.flags.FLAG === "num") {
+            return textCode.split(",");
+        }
+    },
+
+    ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    check: function (word) {
+
+        var trimmed = word.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+        if (this.check_exact(trimmed)) return true;
+
+        if (trimmed.toUpperCase() === trimmed) {
+            var capitalized = trimmed[0] + trimmed.substring(1).toLowerCase();
+            if (this.has_flag(capitalized, "KEEPCASE")) return false;
+            if (this.check_exact(capitalized)) return true;
         }
 
-        // The exact word is not in the dictionary.
-        if (trimmedWord.toUpperCase() === trimmedWord) {
-            // The word was supplied in all uppercase.
-            // Check for a capitalized form of the word.
-            var capitalizedWord = trimmedWord[0] + trimmedWord.substring(1).toLowerCase();
-
-            if (this.hasFlag(capitalizedWord, "KEEPCASE")) {
-                // Capitalization variants are not allowed for this word.
-                return false;
-            }
-
-            if (this.checkExact(capitalizedWord)) {
-                return true;
-            }
+        var lowercase = trimmed.toLowerCase();
+        if (lowercase !== trimmed) {
+            if (this.has_flag(lowercase, "KEEPCASE")) return false;
+            if (this.check_exact(lowercase)) return true;
         }
 
-        var lowercaseWord = trimmedWord.toLowerCase();
+        return false;
+    },
 
-        if (lowercaseWord !== trimmedWord) {
-            if (this.hasFlag(lowercaseWord, "KEEPCASE")) {
-                // Capitalization variants are not allowed for this word.
-                return false;
-            }
+    check_exact: function (word) {
 
-            // Check for a lowercase form
-            if (this.checkExact(lowercaseWord)) {
-                return true;
+        var rule_codes = this.lookup_tbl[word];
+        if (typeof rule_codes === 'undefined') {
+            return this.compound_min (word);
+        } else {
+            return (!this.has_flag(word, "ONLYINCOMPOUND"));
+        }
+    },
+
+    compound_min: function (word) {
+
+        if ("COMPOUNDMIN" in this.flags && word.length >= this.flags.COMPOUNDMIN) {
+            for (var i = 0, _len = this.CRs.length; i < _len; i++) {
+                if (word.match(this.CRs[i])) return true;
             }
         }
 
         return false;
     },
 
-    checkExact: function (word) {
-        var ruleCodes = this.dictionaryTable[word];
+    has_flag: function (word, flag) {
 
-        if (typeof ruleCodes === 'undefined') {
-            // Check if this might be a compound word.
-            if ("COMPOUNDMIN" in this.flags && word.length >= this.flags.COMPOUNDMIN) {
-                for (var i = 0, _len = this.compoundRules.length; i < _len; i++) {
-                    if (word.match(this.compoundRules[i])) {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-        else {
-            if (this.hasFlag(word, "ONLYINCOMPOUND")) {
-                return false;
-            }
-
-            return true;
-        }
-    },
-
-    hasFlag: function (word, flag) {
         if (flag in this.flags) {
-            var wordFlags = this.dictionaryTable[word];
-
-            if (wordFlags && wordFlags.indexOf(this.flags[flag]) !== -1) {
-                return true;
-            }
+            var wordFlags = this.lookup_tbl[word]; return (wordFlags &&
+                wordFlags.indexOf(this.flags[flag]) !== -1
+            );
         }
 
         return false;
     }
 };
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////

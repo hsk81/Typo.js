@@ -12,14 +12,14 @@
 
 <script type="text/javascript">
 function run() {
-    var affData = Typo.prototype._readFile("../typo/dictionaries/la_QR.aff");
-    var wordData = Typo.prototype._readFile("../typo/dictionaries/la_QR.dic");
+    var affData = Typo.prototype.read_file("../typo/dictionaries/la_QR.aff");
+    var wordData = Typo.prototype.read_file("../typo/dictionaries/la_QR.dic");
     testDictionary(new Typo("la_QR", affData, wordData, "hash"));
 }
 
 function testDictionary(dict) {
     test("Dictionary object attributes are properly set", function () {
-        equal(dict.dictionary, "la_QR");
+        equal(dict.lingua, "la_QR");
     });
 
     test("Correct checking of words with no affixes", function () {
