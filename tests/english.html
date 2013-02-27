@@ -9,152 +9,137 @@
     <script type="text/javascript"
             src="http://code.jquery.com/qunit/git/qunit.js"></script>
     <script type="text/javascript" src="../typo/typo.js"></script>
-    <script type="text/javascript">
 
-        function get(path) {
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", path, false);
-            xhr.send(null);
+<script type="text/javascript">
+function run() {
+    var affData = Typo.prototype._readFile("../typo/dictionaries/en_US.aff");
+    var wordData = Typo.prototype._readFile("../typo/dictionaries/en_US.dic");
+    testDictionary(new Typo("en_US", affData, wordData));
+}
 
-            if (xhr.status == 200) {
-                return xhr.responseText;
-            } else {
-                return null;
-            }
-        }
+function testDictionary(typo) {
+    test("Dictionary object attributes are properly set", function () {
+        equal(typo.dictionary, "en_US");
+    });
 
-        function run() {
-            var utilityDict = new Typo();
-            var affData = get("../typo/dictionaries/en_US.aff");
-            var wordData = get("../typo/dictionaries/en_US.dic");
+    test("Suggestions", function () {
+        deepEqual(typo.suggest("speling"), [
+            "spelling", "spieling", "spewing", "peeling", "selling" ]);
+        deepEqual(typo.suggest("spitting"), [],
+                "Correctly spelled words receive no suggestions.");
+    });
 
-            var typo = new Typo("en_US", affData, wordData); TYPO = typo;
-            test_dictionary(typo);
-        }
+    test("Correct checking of words with no affixes", function () {
+        equal(typo.check("a"), true);
+        equal(typo.check("aback"), true);
+        equal(typo.check("juicily"), true);
+        equal(typo.check("palmate"), true);
+        equal(typo.check("palpable"), true);
+    });
 
-        function test_dictionary(typo) {
-            test("Dictionary object attributes are properly set", function () {
-                equal(typo.dictionary, "en_US");
-            });
+    test("Correct checking of root words with single affixes (affixes not used)", function () {
+        equal(typo.check("paling"), true);
+        equal(typo.check("arranging"), true);
+        equal(typo.check("arrant"), true);
+        equal(typo.check("hailing"), true);
+    });
 
-            test("Suggestions", function () {
-                deepEqual(typo.suggest("speling"), [
-                    "spelling", "spieling", "spewing", "peeling", "selling" ]);
-                deepEqual(typo.suggest("spitting"), [],
-                        "Correctly spelled words receive no suggestions.");
-            });
+    test("Correct checking of root words with single affixes (affixes used)", function () {
+        equal(typo.check("john's"), true);
+        equal(typo.check("uncritically"), true);
+        equal(typo.check("hypersensitiveness"), true);
+        equal(typo.check("illusive"), true);
+    });
 
-            test("Correct checking of words with no affixes", function () {
-                equal(typo.check("a"), true);
-                equal(typo.check("aback"), true);
-                equal(typo.check("juicily"), true);
-                equal(typo.check("palmate"), true);
-                equal(typo.check("palpable"), true);
-            });
+    test("Capitalization is respected.", function () {
+        equal(typo.check("A"), true);
+        equal(typo.check("a"), true);
+        equal(typo.check("AA"), true);
+        equal(typo.check("ABANDONING"), true);
+        equal(typo.check("abandonING"), true);
+        equal(typo.check("abandon"), true);
+        equal(typo.check("Abbe"), true);
+        equal(typo.check("Abbott's"), true);
+        equal(typo.check("abbott's"), false);
+        equal(typo.check("Yum"), true);
+        equal(typo.check("yum"), true);
+        equal(typo.check("YUM"), true);
+        equal(typo.check("aa"), false);
+        equal(typo.check("aaron"), false);
+        equal(typo.check("abigael"), false);
+        equal(typo.check("YVES"), true);
+        equal(typo.check("yves"), false);
+        equal(typo.check("Yves"), true);
+        equal(typo.check("Alex"), true);
+        equal(typo.check("alex"), false);
+    });
 
-            test("Correct checking of root words with single affixes (affixes not used)", function () {
-                equal(typo.check("paling"), true);
-                equal(typo.check("arranging"), true);
-                equal(typo.check("arrant"), true);
-                equal(typo.check("hailing"), true);
-            });
+    test("Words not in the dictionary in any form are marked as misspelled.", function () {
+        equal(typo.check("aaraara"), false);
+        equal(typo.check("aaraara"), false);
+        equal(typo.check("aaraara"), false);
+        equal(typo.check("aaraara"), false);
+        equal(typo.check("aaraara"), false);
+    });
 
-            test("Correct checking of root words with single affixes (affixes used)", function () {
-                equal(typo.check("john's"), true);
-                equal(typo.check("uncritically"), true);
-                equal(typo.check("hypersensitiveness"), true);
-                equal(typo.check("illusive"), true);
-            });
+    test("Leading and trailing whitespace is ignored.", function () {
+        equal(typo.check("concept "), true);
+        equal(typo.check(" concept"), true);
+        equal(typo.check("  concept"), true);
+        equal(typo.check("concept  "), true);
+        equal(typo.check("  concept  "), true);
+    });
 
-            test("Capitalization is respected.", function () {
-                equal(typo.check("A"), true);
-                equal(typo.check("a"), true);
-                equal(typo.check("AA"), true);
-                equal(typo.check("ABANDONING"), true);
-                equal(typo.check("abandonING"), true);
-                equal(typo.check("abandon"), true);
-                equal(typo.check("Abbe"), true);
-                equal(typo.check("Abbott's"), true);
-                equal(typo.check("abbott's"), false);
-                equal(typo.check("Yum"), true);
-                equal(typo.check("yum"), true);
-                equal(typo.check("YUM"), true);
-                equal(typo.check("aa"), false);
-                equal(typo.check("aaron"), false);
-                equal(typo.check("abigael"), false);
-                equal(typo.check("YVES"), true);
-                equal(typo.check("yves"), false);
-                equal(typo.check("Yves"), true);
-                equal(typo.check("Alex"), true);
-                equal(typo.check("alex"), false);
-            });
+    test("ONLYINCOMPOUND flag is respected", function () {
+        equal(typo.check("1th"), false);
+        equal(typo.check("2th"), false);
+        equal(typo.check("3th"), false);
+    });
 
-            test("Words not in the dictionary in any form are marked as misspelled.", function () {
-                equal(typo.check("aaraara"), false);
-                equal(typo.check("aaraara"), false);
-                equal(typo.check("aaraara"), false);
-                equal(typo.check("aaraara"), false);
-                equal(typo.check("aaraara"), false);
-            });
+    test("Compound words", function () {
+        equal(typo.check("1st"), true);
+        equal(typo.check("2nd"), true);
+        equal(typo.check("3rd"), true);
+        equal(typo.check("4th"), true);
+        equal(typo.check("5th"), true);
+        equal(typo.check("6th"), true);
+        equal(typo.check("7th"), true);
+        equal(typo.check("8th"), true);
+        equal(typo.check("9th"), true);
+        equal(typo.check("10th"), true);
+        equal(typo.check("11th"), true);
+        equal(typo.check("12th"), true);
+        equal(typo.check("13th"), true);
+        equal(typo.check("1th"), false);
+        equal(typo.check("2rd"), false);
+        equal(typo.check("3th"), false);
+        equal(typo.check("4rd"), false);
+        equal(typo.check("100st"), false);
+    });
 
-            test("Leading and trailing whitespace is ignored.", function () {
-                equal(typo.check("concept "), true);
-                equal(typo.check(" concept"), true);
-                equal(typo.check("  concept"), true);
-                equal(typo.check("concept  "), true);
-                equal(typo.check("  concept  "), true);
-            });
+    test("Possessives are properly checked.", function () {
+        equal(typo.check("concept's"), true);
+        // acceptability's is in the dictionary including the 's
+        equal(typo.check("acceptability's's"), false);
+    });
 
-            test("ONLYINCOMPOUND flag is respected", function () {
-                equal(typo.check("1th"), false);
-                equal(typo.check("2th"), false);
-                equal(typo.check("3th"), false);
-            });
+    test("Replacement rules are implemented", function () {
+        deepEqual(typo.suggest("wagh"), [ "weigh" ]);
+        deepEqual(typo.suggest("ceit"), [ "cat" ]);
+        deepEqual(typo.suggest("seau"), [ "so" ]);
+        deepEqual(typo.suggest("soker"), [ "choker" ]);
+    });
 
-            test("Compound words", function () {
-                equal(typo.check("1st"), true);
-                equal(typo.check("2nd"), true);
-                equal(typo.check("3rd"), true);
-                equal(typo.check("4th"), true);
-                equal(typo.check("5th"), true);
-                equal(typo.check("6th"), true);
-                equal(typo.check("7th"), true);
-                equal(typo.check("8th"), true);
-                equal(typo.check("9th"), true);
-                equal(typo.check("10th"), true);
-                equal(typo.check("11th"), true);
-                equal(typo.check("12th"), true);
-                equal(typo.check("13th"), true);
-                equal(typo.check("1th"), false);
-                equal(typo.check("2rd"), false);
-                equal(typo.check("3th"), false);
-                equal(typo.check("4rd"), false);
-                equal(typo.check("100st"), false);
-            });
+    test("Contractions", function () {
+        equal(typo.check("aren't"), true);
+        equal(typo.check("I'm"), true);
+        equal(typo.check("we're"), true);
+        equal(typo.check("didn't"), true);
+        equal(typo.check("didn'ts"), false);
+        equal(typo.check("he're"), false);
+    });
+}</script>
 
-            test("Possessives are properly checked.", function () {
-                equal(typo.check("concept's"), true);
-                // acceptability's is in the dictionary including the 's
-                equal(typo.check("acceptability's's"), false);
-            });
-
-            test("Replacement rules are implemented", function () {
-                deepEqual(typo.suggest("wagh"), [ "weigh" ]);
-                deepEqual(typo.suggest("ceit"), [ "cat" ]);
-                deepEqual(typo.suggest("seau"), [ "so" ]);
-                deepEqual(typo.suggest("soker"), [ "choker" ]);
-            });
-
-            test("Contractions", function () {
-                equal(typo.check("aren't"), true);
-                equal(typo.check("I'm"), true);
-                equal(typo.check("we're"), true);
-                equal(typo.check("didn't"), true);
-                equal(typo.check("didn'ts"), false);
-                equal(typo.check("he're"), false);
-            });
-        }
-    </script>
 </head>
 <body onload="run();">
     <h1 id="qunit-header">Typo.js English Test Suite</h1>

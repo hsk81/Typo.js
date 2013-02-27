@@ -1,42 +1,40 @@
 <html>
-	<head>
-		<meta charset="ISO8859-1">
-		<title>Typo.js German Test Suite</title>
-		<link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
-		<script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
-		<script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js"></script>
-		<script type="text/javascript" src="../typo/typo.js"></script>
-		<script type="text/javascript">
-			function run() {
-				var utilityDict = new Typo();
-				var affData = utilityDict._readFile(chrome.extension.getURL("tests/dictionaries/de_DE/de_DE.aff"), "ISO8859-1");
-				var wordData = utilityDict._readFile(chrome.extension.getURL("tests/dictionaries/de_DE/de_DE.dic"), "ISO8859-1");
-				
-				var hashDict = new Typo("de_DE", affData, wordData);
-				testDictionary(hashDict);
-			}
+<head>
+    <meta charset="ISO8859-1">
+    <title>Typo.js German Test Suite</title>
+    <link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css"
+          type="text/css" media="screen"/>
+    <script type="text/javascript"
+            src="http://code.jquery.com/jquery-latest.js"></script>
+    <script type="text/javascript"
+            src="http://code.jquery.com/qunit/git/qunit.js"></script>
+    <script type="text/javascript" src="../typo/typo.js"></script>
 
-			function testDictionary(dict) {
-				test("Dictionary object attributes are properly set", function () {
-					equal(dict.dictionary, "de_DE");
-				});
-				
-				test("Capitalization is respected", function () {
-					equal(dict.check("Liebe"), true);
-					equal(dict.check("LIEBE"), true);
-					
-					// liebe is flagged with ONLYINCOMPOUND, but lieb has a suffix rule that generates liebe
-					equal(dict.check("liebe"), true);
-				});
-			}
-				
-		</script>
-	</head>
-	<body onload="run();">
-		<h1 id="qunit-header">Typo.js German Test Suite</h1>
-		<h2 id="qunit-banner"></h2>
-		<div id="qunit-testrunner-toolbar"></div>
-		<h2 id="qunit-userAgent"></h2>
-		<ol id="qunit-tests"></ol>
-	</body>
+<script type="text/javascript">
+function run() {
+    var affData = Typo.prototype._readFile("../typo/dictionaries/de_DE.aff");
+    var wordData = Typo.prototype._readFile("../typo/dictionaries/de_DE.dic");
+    testDictionary(new Typo("de_DE", affData, wordData));
+}
+
+function testDictionary(dict) {
+    test("Dictionary object attributes are properly set", function () {
+        equal(dict.dictionary, "de_DE");
+    });
+
+    test("Capitalization is respected", function () {
+        equal(dict.check("Liebe"), true);
+        equal(dict.check("LIEBE"), true);
+        equal(dict.check("liebe"), true);
+    });
+}</script>
+
+</head>
+<body onload="run();">
+    <h1 id="qunit-header">Typo.js German Test Suite</h1>
+    <h2 id="qunit-banner"></h2>
+    <div id="qunit-testrunner-toolbar"></div>
+    <h2 id="qunit-userAgent"></h2>
+    <ol id="qunit-tests"></ol>
+</body>
 </html>
