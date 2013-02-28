@@ -19,49 +19,49 @@ function run() {
     testDictionary(new Typo("fr_FR", affData, wordData));
 }
 
-function testDictionary(dict) {
+function testDictionary(typo) {
     test("Dictionary object attributes are properly set", function () {
-        equal(dict.lingua, "fr_FR");
+        equal(typo.lingua, "fr_FR");
     });
 
     test("Correct checking of words with affixes", function () {
-        equal(dict.check("marchons"), true);
+        equal(typo.check("marchons"), true);
     });
 
     test("KEEPCASE flag is respected", function () {
-        equal(dict.check("Bq"), true);
-        equal(dict.check("BQ"), false);
-        equal(dict.check("pH"), true);
-        equal(dict.check("mmHg"), true);
-        equal(dict.check("MMHG"), false);
-        equal(dict.check("Mmhg"), false);
+        equal(typo.check("Bq"), true);
+        equal(typo.check("BQ"), false);
+        equal(typo.check("pH"), true);
+        equal(typo.check("mmHg"), true);
+        equal(typo.check("MMHG"), false);
+        equal(typo.check("Mmhg"), false);
     });
 
     test("Contractions are recognized", function () {
-        equal(dict.check("j'espère"), true);
-        equal(dict.check("j'espére"), false);
-        equal(dict.check("c'est"), true);
-        equal(dict.check("C'est"), true);
+        equal(typo.check("j'espère"), true);
+        equal(typo.check("j'espére"), false);
+        equal(typo.check("c'est"), true);
+        equal(typo.check("C'est"), true);
     });
 
     test("Continuation classes", function () {
-        equal(dict.check("l'impedimentum"), true);
-        equal(dict.check("d'impedimentum"), true);
-        equal(dict.check("d'impedimenta"), true);
-        equal(dict.check("espérés"), true);
-        equal(dict.check("espérée"), true);
-        equal(dict.check("espérées"), true);
-        equal(dict.check("qu'espérés"), true);
-        equal(dict.check("qu'espérée"), true);
-        equal(dict.check("qu'espérées"), true);
+        equal(typo.check("l'impedimentum"), true);
+        equal(typo.check("d'impedimentum"), true);
+        equal(typo.check("d'impedimenta"), true);
+        equal(typo.check("espérés"), true);
+        equal(typo.check("espérée"), true);
+        equal(typo.check("espérées"), true);
+        equal(typo.check("qu'espérés"), true);
+        equal(typo.check("qu'espérée"), true);
+        equal(typo.check("qu'espérées"), true);
     });
 
     test("NEEDAFFIX is respected", function () {
         // Not flagged with NEEDAFFIX
-        equal(dict.check("espressivo"), true);
+        equal(typo.check("espressivo"), true);
         // Is flagged with NEEDAFFIX, but has an empty affix rule
-        equal(dict.check("espérance"), true);
-        equal(dict.check("esperluette"), true);
+        equal(typo.check("espérance"), true);
+        equal(typo.check("esperluette"), true);
     });
 }</script>
 
