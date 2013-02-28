@@ -345,7 +345,7 @@ Typo.prototype = {
             return flags;
         }
         else if (this.flags.FLAG === "num") {
-            return textCode.split(",");
+            return text_codes.split(",");
         }
     },
 
