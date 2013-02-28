@@ -17,7 +17,7 @@ function run() {
     test("Dictionary instantiated without arguments is empty.", function () {
         deepEqual(typo.rules, {});
         deepEqual(typo.lookup_tbl, {});
-        deepEqual(typo.lingua, null);
+        deepEqual(typo.lingua, undefined);
     });
 
     test("Comments are removed from affix files", function () {
