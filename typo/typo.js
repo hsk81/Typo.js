@@ -74,6 +74,12 @@ var Typo = function (lingua, aff_data, dic_data, settings) {
 
 Typo.prototype = {
 
+    load: function (object) {
+        for (var key in object) if (object.hasOwnProperty (key)) {
+            this[key] = object[key];
+        } return this;
+    },
+
     read_file: function (path, charset) {
         if (!charset) charset = "ISO8859-1";
 
