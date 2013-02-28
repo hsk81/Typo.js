@@ -12,8 +12,8 @@
 
 <script type="text/javascript">
 function run() {
-    var affData = Typo.prototype.read_file("../typo/dictionaries/la_QR.aff");
-    var wordData = Typo.prototype.read_file("../typo/dictionaries/la_QR.dic");
+    var affData = Typo.prototype.read_file("../typo/dictionaries/la_ANY.aff");
+    var wordData = Typo.prototype.read_file("../typo/dictionaries/la_ANY.dic");
     testDictionary(new Typo("la_QR", affData, wordData, "hash"));
 }
 
