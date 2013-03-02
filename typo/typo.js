@@ -84,12 +84,12 @@ Typo.prototype = {
     read_file: function (path, charset) {
         if (!charset) charset = "ISO8859-1";
 
-        var req = new XMLHttpRequest();
-        req.open("GET", path, false);
-        req.overrideMimeType("text/plain; charset=" + charset);
-        req.send(null);
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", path, false);
+        xhr.overrideMimeType("text/plain; charset=" + charset);
+        xhr.send(null);
 
-        return req.responseText;
+        return (xhr.status == 200) ? xhr.responseText : null;
     },
 
     ///////////////////////////////////////////////////////////////////////////
